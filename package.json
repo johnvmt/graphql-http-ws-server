@@ -1,0 +1,26 @@
+{
+  "name": "graphql-http-ws-server",
+  "version": "1.0.0",
+  "description": "Apollo-based GraphQL Server with WebSockets",
+  "keywords": [],
+  "author": {
+    "name": "John Murphy-Teixidor",
+    "email": "johnvmt@gmail.com"
+  },
+  "repository": {},
+  "private": true,
+  "main": "GraphQLHTTPServer.js",
+  "module": "GraphQLHTTPServer.js",
+  "dependencies": {
+    "apollo-server-express": "^2.9.3",
+    "esm": "^3.2.25",
+    "express": "^4.17.1",
+    "graphql": "^14.5.7",
+    "ws": "^7.1.2"
+  },
+  "devDependencies": {
+    "graphql-tag": "^2.10.1",
+    "graphql-tools": "^4.0.5",
+    "event-emitter-async-iterator": "^1.0.1"
+  }
+}

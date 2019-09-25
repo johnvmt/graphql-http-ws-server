@@ -4,8 +4,6 @@ Note: The server will only intercept WS connections that have the graphQL subscr
 
 ### Options
 
-## Options ##
-
 | Option 	        | Description                                           | Default                   |
 |----------------	|------------------------------------------------------ |-------------------------- |
 | port    	        | Port for HTTP Server to listen on              	    | 80                        |

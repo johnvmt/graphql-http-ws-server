@@ -52,7 +52,7 @@ class GraphQLHTTPWSServer {
 
         if(options.listen) {
             self.httpServer.listen(options.port, () => {
-                self._debug(`🚀 GraphQLHTTPServer ready on port ${options.port} on path ${self.apolloServer.graphQLPath}`);
+                self._debug(`🚀 GraphQLHTTPServer ready on port ${options.port} on path ${self.apolloServer.graphqlPath}`);
                 self._debug(`🚀 GraphQLHTTPServer Subscriptions ready on port ${options.port} on path ${self.apolloServer.subscriptionsPath}`);
             });
         }

@@ -10,13 +10,13 @@ class GraphQLHTTPWSServer {
     constructor(schema, passedOptions = {}) {
         const self = this;
 
-        const options = Object.assign({}, passedOptions, {
+        const options = Object.assign({
             port: 80,
             graphQLPath: '/graphql',
             subscriptionsPath: '/graphql',
             listen: true,
             debug: false
-        });
+        }, passedOptions);
 
         self.expressApp = (options.hasOwnProperty('expressApp')) ? options.expressApp : express();
         self.httpServer = (options.hasOwnProperty('httpServer')) ? options.httpServer : http.createServer(self.expressApp);
@@ -24,8 +24,9 @@ class GraphQLHTTPWSServer {
 
         self.subscriptionServer = SubscriptionServer.create({
                 schema: schema,
-                execute,
-                subscribe,
+                execute: execute,
+                subscribe: subscribe,
+                keepAlive: (options.hasOwnProperty('keepAlive')) ? options.keepAlive : 0
             },
             self.wsServer);
 

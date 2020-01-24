@@ -22,18 +22,29 @@ class GraphQLHTTPWSServer {
         self.httpServer = (options.hasOwnProperty('httpServer')) ? options.httpServer : http.createServer(self.expressApp);
         self.wsServer = (options.hasOwnProperty('wsServer')) ? options.wsServer : new WebSocket.Server({ noServer: true });
 
-        self.subscriptionServer = SubscriptionServer.create({
+        self.subscriptionServer = SubscriptionServer.create(Object.assign({},
+            GraphQLHTTPWSServer.filterObject(options, ['rootValue', 'onOperation', 'onOperationComplete', 'onConnect', 'onDisconnect', 'keepAlive']),
+            {
                 schema: schema,
                 execute: execute,
-                subscribe: subscribe,
-                keepAlive: (options.hasOwnProperty('keepAlive')) ? options.keepAlive : 0
-            },
+                subscribe: subscribe
+            }),
             self.wsServer);
+
+        Object.assign({
+                introspection: true,
+                playground: false
+            },
+            GraphQLHTTPWSServer.filterObject(options, ['context', 'mocks', 'mockEntireSchema', 'schemaDirectives', 'introspection', 'debug', 'validationRules', 'tracing', 'formatError', 'engine', 'persistedQueries', 'cors']),
+            {
+                schema: schema
+            });
 
         self.apolloServer = new ApolloServer({
             schema: schema,
             introspection: true,
-            playground: false
+            playground: false,
+            context: options.context
         });
 
         self.apolloServer.applyMiddleware({
@@ -41,7 +52,7 @@ class GraphQLHTTPWSServer {
             path: options.graphQLPath,
         });
 
-        self.httpServer.on('upgrade', function upgrade(request, socket, head) {
+        self.httpServer.on('upgrade', (request, socket, head) => {
             const pathname = url.parse(request.url).pathname;
 
             if(pathname === options.subscriptionsPath) {
@@ -61,6 +72,15 @@ class GraphQLHTTPWSServer {
 
     _debug() {
         console.log.apply(console, Array.prototype.slice.call(arguments));
+    }
+
+    static filterObject(rawObject, filterKeys) {
+        return Object.keys(rawObject)
+            .filter(key => filterKeys.includes(key))
+            .reduce((filteredObject, key) => {
+                filteredObject[key] = rawObject[key];
+                return filteredObject;
+            }, {});
     }
 }
 

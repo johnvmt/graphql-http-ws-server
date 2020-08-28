@@ -1,2 +1,4 @@
-require = require('esm')(module);
-module.exports = require('./src/GraphQLHTTPWSServer.js').default;
+import GraphQLHTTPWSServer from "./src/GraphQLHTTPWSServer";
+export {GraphQLHTTPWSServer};
+export default GraphQLHTTPWSServer;
+export * from "apollo-server-express";

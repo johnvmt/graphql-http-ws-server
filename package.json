@@ -1,6 +1,7 @@
 {
   "name": "graphql-http-ws-server",
-  "version": "1.1.0",
+  "version": "1.2.0",
+
   "description": "Apollo-based GraphQL Server with WebSockets",
   "keywords": ["graphql", "apollo server", "websockets"],
   "author": {
@@ -12,21 +13,21 @@
     "url": "https://github.com/johnvmt/graphql-http-ws-server.git"
   },
   "private": false,
+  "type": "module",
   "main": "GraphQLHTTPServer.js",
   "module": "GraphQLHTTPServer.js",
   "dependencies": {
-    "apollo-server-express": "^2.9.3",
-    "esm": "^3.2.25",
+    "apollo-server-express": "^2.19.0",
     "express": "^4.17.1",
-    "ws": "^7.1.2"
+    "ws": "^7.4.1"
   },
   "devDependencies": {
-    "graphql-tag": "^2.10.1",
-    "graphql-tools": "^4.0.5",
-    "event-emitter-async-iterator": "^1.0.1"
+    "graphql-tag": "^2.11.0",
+    "graphql-tools": "^7.0.2",
+    "event-emitter-async-iterator": "^1.1.0"
   },
   "peerDependencies": {
-    "graphql": "^14.0.0",
-    "subscriptions-transport-ws": "^0.9.0"
+    "graphql": ">=14.0.0",
+    "subscriptions-transport-ws": "^0.9.18"
   }
 }

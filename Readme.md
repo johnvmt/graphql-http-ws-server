@@ -17,20 +17,19 @@ Note: The server will only intercept WS connections that have the graphQL subscr
 
 ### Example
 
-    import { makeExecutableSchema } from 'graphql-tools';
+    import { makeExecutableSchema } from "@graphql-tools/schema";
     import gql from 'graphql-tag'
     import EventEmitterAsyncIterator from 'event-emitter-async-iterator';
-    import GraphQLHTTPWSServer from "graphql-http-ws-server";
+    import GraphQLHTTPWSServer from "./src/GraphQLHTTPWSServer.js";
     
     const typeDefs = gql(`
-            type Query {
-                hello: String
-            }
-            
-            type Subscription {
-                time: String
-            }
-        `);
+        type Query {
+            hello: String
+        }
+        type Subscription {
+            time: String
+        }
+    `);
     
     const resolvers = {
         Query: {
@@ -42,8 +41,7 @@ Note: The server will only intercept WS connections that have the graphQL subscr
             time: {
                 subscribe: (obj, args, context, info) => {
                     const asyncIterator = new EventEmitterAsyncIterator();
-    
-    
+
                     const sendDate = () => {
                         asyncIterator.pushValue({
                             time: (new Date()).toISOString()

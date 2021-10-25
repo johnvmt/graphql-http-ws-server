@@ -1,8 +1,13 @@
 {
   "name": "graphql-http-ws-server",
-  "version": "2.0.0",
+  "version": "3.0.0",
   "description": "Apollo-based GraphQL Server with WebSockets",
-  "keywords": ["graphql", "apollo server", "websockets"],
+  "keywords": [
+    "graphql",
+    "apollo server",
+    "websockets"
+  ],
+  "type": "module",
   "author": {
     "name": "John Murphy-Teixidor",
     "email": "johnvmt@gmail.com"
@@ -12,29 +17,22 @@
     "url": "https://github.com/johnvmt/graphql-http-ws-server.git"
   },
   "private": false,
-  "scripts": {
-    "build": "npx babel --plugins @babel/plugin-transform-modules-commonjs --out-dir cjs src"
-  },
   "dependencies": {
-    "apollo-server-express": "^2.19.0",
-    "express": "^4.17.1",
-    "ws": "^7.4.1"
+    "apollo-server-express": "^3.4.0",
+    "express": "^4.17.1"
   },
   "devDependencies": {
-    "@babel/cli": "^7.12.10",
-    "@babel/core": "^7.12.10",
-    "@babel/plugin-transform-modules-commonjs": "^7.12.1",
-    "@babel/preset-env": "^7.12.11",
-    "graphql-tag": "^2.11.0",
-    "graphql-tools": "^7.0.2",
-    "event-emitter-async-iterator": "^1.1.0"
+    "@graphql-tools/schema": "^8.3.0",
+    "event-emitter-async-iterator": "^1.1.0",
+    "graphql": "^15.6.1",
+    "graphql-tag": "^2.12.5",
+    "subscriptions-transport-ws": "^0.9.19",
+    "ws": "^8.2.3"
   },
   "peerDependencies": {
     "graphql": ">=14.0.0",
-    "subscriptions-transport-ws": "^0.9.18"
+    "ws": ">=7.0.0",
+    "subscriptions-transport-ws": ">=0.9.0"
   },
-  "exports": {
-    "require": "./cjs/index.js",
-    "import": "./src/index.js"
-  }
+  "main": "src/exports.js"
 }

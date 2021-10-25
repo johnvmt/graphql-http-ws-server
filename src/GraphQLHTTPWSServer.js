@@ -1,7 +1,7 @@
 import http from "http";
 import url from "url";
 import express from "express";
-import WebSocket from "ws";
+import { WebSocketServer } from "ws";
 import { execute, subscribe } from "graphql";
 import { ApolloServer } from "apollo-server-express";
 import { SubscriptionServer } from "subscriptions-transport-ws";
@@ -19,7 +19,7 @@ class GraphQLHTTPWSServer {
 
         this.expressApp = (options.hasOwnProperty('expressApp')) ? options.expressApp : express();
         this.httpServer = (options.hasOwnProperty('httpServer')) ? options.httpServer : http.createServer(this.expressApp);
-        this.wsServer = (options.hasOwnProperty('wsServer')) ? options.wsServer : new WebSocket.Server({ noServer: true });
+        this.wsServer = (options.hasOwnProperty('wsServer')) ? options.wsServer : new WebSocketServer({ noServer: true });
 
         this.subscriptionServer = SubscriptionServer.create({
                 ...(GraphQLHTTPWSServer.filterObject(options, ['rootValue', 'onOperation', 'onOperationComplete', 'onConnect', 'onDisconnect', 'keepAlive'])),
@@ -36,10 +36,14 @@ class GraphQLHTTPWSServer {
             context: options.context
         });
 
-        this.apolloServer.applyMiddleware({
-            app: this.expressApp,
-            path: options.graphQLPath,
-        });
+        this.apolloServer
+            .start()
+            .then(() => {
+                this.apolloServer.applyMiddleware({
+                    app: this.expressApp,
+                    path: options.graphQLPath,
+                });
+            });
 
         this.httpServer.on('upgrade', (request, socket, head) => {
             const pathname = url.parse(request.url).pathname;

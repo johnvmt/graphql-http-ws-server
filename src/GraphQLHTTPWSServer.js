@@ -4,36 +4,44 @@ import express from "express";
 import { WebSocketServer } from "ws";
 import { execute, subscribe } from "graphql";
 import { ApolloServer } from "apollo-server-express";
+import { ApolloServerPluginLandingPageDisabled } from "apollo-server-core";
 import { SubscriptionServer } from "subscriptions-transport-ws";
+
 
 class GraphQLHTTPWSServer {
     constructor(schema, passedOptions = {}) {
-        const options = {
+        this.options = {
             port: 80,
             graphQLPath: '/graphql',
             subscriptionsPath: '/graphql',
             listen: true,
             debug: false,
+            playground: false,
             ...passedOptions
-        };
+        }
 
-        this.expressApp = (options.hasOwnProperty('expressApp')) ? options.expressApp : express();
-        this.httpServer = (options.hasOwnProperty('httpServer')) ? options.httpServer : http.createServer(this.expressApp);
-        this.wsServer = (options.hasOwnProperty('wsServer')) ? options.wsServer : new WebSocketServer({ noServer: true });
+        this.expressApp = (this.options.hasOwnProperty('expressApp')) ? this.options.expressApp : express();
+        this.httpServer = (this.options.hasOwnProperty('httpServer')) ? this.options.httpServer : http.createServer(this.expressApp);
+        this.wsServer = (this.options.hasOwnProperty('wsServer')) ? this.options.wsServer : new WebSocketServer({ noServer: true });
 
         this.subscriptionServer = SubscriptionServer.create({
-                ...(GraphQLHTTPWSServer.filterObject(options, ['rootValue', 'onOperation', 'onOperationComplete', 'onConnect', 'onDisconnect', 'keepAlive'])),
+                ...(GraphQLHTTPWSServer.filterObject(this.options, ['rootValue', 'onOperation', 'onOperationComplete', 'onConnect', 'onDisconnect', 'keepAlive'])),
                 schema: schema,
                 execute: execute,
                 subscribe: subscribe
             },
             this.wsServer);
 
+        const apolloServerPlugins = [];
+
+        if(!this.options.playground)
+            apolloServerPlugins.push(ApolloServerPluginLandingPageDisabled())
+
         this.apolloServer = new ApolloServer({
             schema: schema,
             introspection: true,
-            playground: false,
-            context: options.context
+            context: this.options.context,
+            plugins: apolloServerPlugins
         });
 
         this.apolloServer
@@ -41,30 +49,33 @@ class GraphQLHTTPWSServer {
             .then(() => {
                 this.apolloServer.applyMiddleware({
                     app: this.expressApp,
-                    path: options.graphQLPath,
+                    path: this.options.graphQLPath,
                 });
             });
 
         this.httpServer.on('upgrade', (request, socket, head) => {
             const pathname = url.parse(request.url).pathname;
 
-            if(pathname === options.subscriptionsPath) {
+            if(pathname === this.options.subscriptionsPath) {
                 this.wsServer.handleUpgrade(request, socket, head, (socket) => {
                     this.wsServer.emit('connection', socket, request);
                 });
             }
         });
 
-        if(options.listen) {
-            this.httpServer.listen(options.port, () => {
-                this._debug(`🚀 GraphQLHTTPServer ready on port ${options.port} on path ${this.apolloServer.graphqlPath}`);
-                this._debug(`🚀 GraphQLHTTPServer Subscriptions ready on port ${options.port} on path ${this.apolloServer.subscriptionsPath}`);
+        if(this.options.listen) {
+            this.httpServer.listen(this.options.port, () => {
+                this._debug(`🚀 GraphQLHTTPServer ready on port ${this.options.port} on path ${this.apolloServer.graphqlPath}`);
+                this._debug(`🚀 GraphQLHTTPServer Subscriptions ready on port ${this.options.port} on path ${this.options.subscriptionsPath}`);
             });
         }
     }
 
     _debug(...args) {
-        console.log.apply(console, args);
+        if(this.options.logger)
+            this.options.logger.info(args.join(" "))
+        if(this.options.debug)
+            console.log(...args);
     }
 
     static filterObject(rawObject, filterKeys) {

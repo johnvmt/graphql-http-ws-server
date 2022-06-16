@@ -11,7 +11,6 @@ Note: The server will only intercept WS connections that have the graphQL subscr
 | subscriptionsPath | Path under WS server for GraphQL                                              | /graphql                  |
 | listen        	| Start HTTP Server                                                             | true                      |
 | logger            | Pass extrernal logger (eg: [Winston](https://github.com/winstonjs/winston))   | null                      |
-| debug             | Print log messages                                                            | false                     |
 | playground        | Enable Playground                                                             | false                     |
 | expressApp        | Pass in an [express](https://expressjs.com/) app                              | null, module will create  |
 | httpServer        | Pass in an HTTP server                                                        | null, module will create  |
@@ -76,5 +75,16 @@ Note: The server will only intercept WS connections that have the graphQL subscr
         port: 80,
         graphqlPath: '/graphql',
         subscriptionsPath: '/graphql',
-        debug: true
+        onConnect: async (connectionParams) => { // legacy graphql-ws subprotocol (subscriptions-transport-ws module)
+            console.log("LEGACY WS CONNECT", req.headers);
+            return {};
+        },
+        wsContext: (params, msg, args) => { // new graphql-transport-ws subprotocol (graphql-ws module)
+            console.log("NEW WS CONNECT", req.headers);
+            return {};
+        },
+        httpContext: async ({req}) => { // HTTP
+            console.log("HTTP CONNECT", req.headers);
+            return {headers: req.headers};
+        }
     });

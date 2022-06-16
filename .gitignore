@@ -63,3 +63,6 @@ typings/
 .idea
 package-log.json
 *.iml
+
+# Test file
+test.js

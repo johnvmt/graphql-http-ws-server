@@ -1,6 +1,6 @@
-import GraphQLHTTPWSServer from "./GraphQLHTTPWSServer.js";
+import createGraphQLHTTPServer from "./createGraphQLHTTPServer.js";
 
-export default GraphQLHTTPWSServer;
-export { GraphQLHTTPWSServer };
+export default createGraphQLHTTPServer;
+export { createGraphQLHTTPServer };
 export * from "@graphql-tools/schema";
 export * from "apollo-server-express";

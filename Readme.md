@@ -21,7 +21,7 @@ Note: The server will only intercept WS connections that have the graphQL subscr
     import { makeExecutableSchema } from "@graphql-tools/schema";
     import gql from 'graphql-tag'
     import EventEmitterAsyncIterator from 'event-emitter-async-iterator';
-    import GraphQLHTTPWSServer from "graphql-http-ws-server";
+    import createGraphQLHTTPServer from "graphql-http-ws-server";
     
     const typeDefs = gql(`
         type Query {
@@ -71,7 +71,7 @@ Note: The server will only intercept WS connections that have the graphQL subscr
         resolvers,
     });
     
-    const server = new GraphQLHTTPWSServer(schema, {
+    createGraphQLHTTPServer(schema, {
         port: 80,
         graphqlPath: '/graphql',
         subscriptionsPath: '/graphql',

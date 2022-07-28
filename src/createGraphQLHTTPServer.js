@@ -18,10 +18,13 @@ const createGraphQLHTTPServer = (schema, options = {}) => {
         port: 80,
         graphQLPath: '/graphql',
         subscriptionsPath: '/graphql',
-        listen: true,
+        listen: !options.httpServer && !options.expressApp, // default: listen only when creating server
         playground: false,
         ...options
     };
+
+    if(typeof mergedOptions.port !== "number" && !mergedOptions.httpServer && !mergedOptions.expressApp)
+        throw new Error('port must be a number')
 
     const expressApp = 'expressApp' in mergedOptions
         ? mergedOptions.expressApp
@@ -47,13 +50,13 @@ const createGraphQLHTTPServer = (schema, options = {}) => {
     const graphQLWSWSServer = new WebSocketServer({ noServer: true });
 
     SubscriptionsTransportWSSubscriptionServer.create({
-        // allowed options
-        ...filterObject(mergedOptions, ['rootValue', 'onOperation', 'onOperationComplete', 'onConnect', 'onDisconnect', 'keepAlive']),
-        schema: schema,
-        execute: execute,
-        subscribe: subscribe
-    },
-    graphQLWSWSServer);
+            // allowed options
+            ...filterObject(mergedOptions, ['rootValue', 'onOperation', 'onOperationComplete', 'onConnect', 'onDisconnect', 'keepAlive']),
+            schema: schema,
+            execute: execute,
+            subscribe: subscribe
+        },
+        graphQLWSWSServer);
 
     httpServer.on('upgrade', (request, socket, head) => {
         const pathname = url.parse(request.url).pathname;

@@ -1,9 +1,15 @@
-import http from "http";
-import url from "url";
-import express from "express";
-import { WebSocketServer } from "ws";
-import { ApolloServer } from "apollo-server-express";
-import { ApolloServerPluginDrainHttpServer, ApolloServerPluginLandingPageDisabled } from "apollo-server-core";
+import { createServer as createHttpServer } from 'http';
+import { WebSocketServer } from 'ws';
+import express from 'express';
+import bodyParser from 'body-parser';
+import cors from 'cors';
+import gql from 'graphql-tag';
+import url from 'node:url';
+import { makeExecutableSchema } from '@graphql-tools/schema';
+
+import { ApolloServer } from '@apollo/server';
+import { expressMiddleware } from '@apollo/server/express4';
+import { ApolloServerPluginDrainHttpServer } from '@apollo/server/plugin/drainHttpServer';
 
 // graphql-ws
 import { useServer as useGraphQLWSServer } from "graphql-ws/lib/use/ws";
@@ -11,20 +17,31 @@ import { useServer as useGraphQLWSServer } from "graphql-ws/lib/use/ws";
 // subscriptions-transport-ws
 import { execute, subscribe } from "graphql";
 import { SubscriptionServer as SubscriptionsTransportWSSubscriptionServer } from "subscriptions-transport-ws";
-import filterObject from "./utils/filterObject.js";
 
-const createGraphQLHTTPServer = (schema, options = {}) => {
+import filterObject from './utils/filterObject.js';
+
+const createGraphQLHTTPServer = async (options = {}) => {
     const mergedOptions = {
         port: 80,
         graphQLPath: '/graphql',
         subscriptionsPath: '/graphql',
         listen: !options.httpServer && !options.expressApp, // default: listen only when creating server
-        playground: false,
         ...options
     };
 
     if(typeof mergedOptions.port !== "number" && !mergedOptions.httpServer && !mergedOptions.expressApp)
-        throw new Error('port must be a number')
+        throw new Error('port must be a number');
+
+    if(!('schema' in mergedOptions) && (!('typeDefs' in mergedOptions) || !('resolvers' in mergedOptions)))
+        throw new Error('schema or typeDefs/resolvers are required');
+
+    // executable schema for Apollo and WebSocket server
+    const schema = mergedOptions.schema ?? makeExecutableSchema({
+        typeDefs: typeof mergedOptions.typeDefs === 'object'
+            ? mergedOptions.typeDefs
+            : gql(mergedOptions.typeDefs),
+        resolvers: mergedOptions.resolvers
+    });
 
     const expressApp = 'expressApp' in mergedOptions
         ? mergedOptions.expressApp
@@ -32,7 +49,7 @@ const createGraphQLHTTPServer = (schema, options = {}) => {
 
     const httpServer = ('httpServer' in mergedOptions)
         ? mergedOptions.httpServer
-        : http.createServer(expressApp);
+        : createHttpServer(expressApp);
 
     // graphql-transport-ws subprotocol (graphql-ws module)
     const graphQLWSTransportWSServer = new WebSocketServer({ noServer: true });
@@ -66,12 +83,12 @@ const createGraphQLHTTPServer = (schema, options = {}) => {
                 ? request.headers['sec-websocket-protocol']
                 : 'graphql-ws';
 
-            if(wsSubprotocol === 'graphql-transport-ws') {
+            if(wsSubprotocol === 'graphql-transport-ws') { // newer graphql-transport-ws subprotocol, graphql-ws module
                 graphQLWSTransportWSServer.handleUpgrade(request, socket, head, (socket) => {
                     graphQLWSTransportWSServer.emit('connection', socket, request);
                 });
             }
-            else if(wsSubprotocol === 'graphql-ws') {
+            else if(wsSubprotocol === 'graphql-ws') { // legacy graphql-ws subprotocol, subscriptions-transport-ws module
                 graphQLWSWSServer.handleUpgrade(request, socket, head, (socket) => {
                     graphQLWSWSServer.emit('connection', socket, request);
                 });
@@ -82,12 +99,11 @@ const createGraphQLHTTPServer = (schema, options = {}) => {
     });
 
     const apolloServerPlugins = [
-        // graceful shutdown for the HTTP server.
+        // graceful shutdown for HTTP server.
         ApolloServerPluginDrainHttpServer({
             httpServer: httpServer
         }),
-
-        // graceful shutdown for the WebSocket server.
+        // graceful shutdown for WebSocket server.
         {
             async serverWillStart() {
                 return {
@@ -99,25 +115,27 @@ const createGraphQLHTTPServer = (schema, options = {}) => {
         },
     ];
 
-    if(!mergedOptions.playground)
-        apolloServerPlugins.push(ApolloServerPluginLandingPageDisabled());
+    if(Array.isArray(mergedOptions.plugins))
+        apolloServerPlugins.push(...mergedOptions.plugins);
 
+    // Set up ApolloServer.
     const apolloServer = new ApolloServer({
         schema,
         csrfPrevention: true,
         cache: "bounded",
         plugins: apolloServerPlugins,
-        context: mergedOptions.httpContext ?? mergedOptions.context,
+
     });
 
-    apolloServer
-        .start()
-        .then(() => {
-            apolloServer.applyMiddleware({
-                app: expressApp,
-                path: mergedOptions.graphQLPath,
-            });
-        });
+    await apolloServer.start();
+
+    expressApp.use(mergedOptions.graphQLPath,
+        cors(),
+        bodyParser.json(),
+        expressMiddleware(apolloServer, {
+            context: mergedOptions.httpContext ?? mergedOptions.context
+        })
+    );
 
     if(mergedOptions.listen) {
         httpServer.listen(mergedOptions.port, () => {

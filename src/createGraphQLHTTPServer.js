@@ -12,7 +12,7 @@ import { expressMiddleware } from '@apollo/server/express4';
 import { ApolloServerPluginDrainHttpServer } from '@apollo/server/plugin/drainHttpServer';
 
 // graphql-ws
-import { useServer as useGraphQLWSServer } from "graphql-ws/lib/use/ws";
+import { useServer as useGraphQLWSServer } from "graphql-ws/use/ws";
 
 // subscriptions-transport-ws
 import { execute, subscribe } from "graphql";
@@ -124,7 +124,6 @@ const createGraphQLHTTPServer = async (options = {}) => {
         csrfPrevention: true,
         cache: "bounded",
         plugins: apolloServerPlugins,
-
     });
 
     await apolloServer.start();

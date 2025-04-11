@@ -1,4 +1,4 @@
-import { createServer as createHttpServer } from 'http';
+import { createServer as createHttpServer } from 'node:http';
 import { WebSocketServer } from 'ws';
 import express from 'express';
 import bodyParser from 'body-parser';

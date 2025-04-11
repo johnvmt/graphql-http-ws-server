@@ -92,3 +92,8 @@ Note: The server will only intercept WS connections that have the graphQL subscr
             return {connection: "HTTP Connect"};
         }
     });
+
+### TODOs
+
+- Apollo doesn't currently support Express v5
+- Apollo currently doesn't work with body-parser v2

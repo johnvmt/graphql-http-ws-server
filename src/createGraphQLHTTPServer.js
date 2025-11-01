@@ -1,4 +1,4 @@
-import { createServer as createHttpServer } from 'http';
+import { createServer as createHttpServer } from 'node:http';
 import { WebSocketServer } from 'ws';
 import express from 'express';
 import bodyParser from 'body-parser';
@@ -12,7 +12,7 @@ import { expressMiddleware } from '@apollo/server/express4';
 import { ApolloServerPluginDrainHttpServer } from '@apollo/server/plugin/drainHttpServer';
 
 // graphql-ws
-import { useServer as useGraphQLWSServer } from "graphql-ws/lib/use/ws";
+import { useServer as useGraphQLWSServer } from "graphql-ws/use/ws";
 
 // subscriptions-transport-ws
 import { execute, subscribe } from "graphql";
@@ -26,6 +26,7 @@ const createGraphQLHTTPServer = async (options = {}) => {
         graphQLPath: '/graphql',
         subscriptionsPath: '/graphql',
         listen: !options.httpServer && !options.expressApp, // default: listen only when creating server
+        keepAlive: 10000, // for websocket servers
         ...options
     };
 
@@ -56,6 +57,7 @@ const createGraphQLHTTPServer = async (options = {}) => {
 
     const graphQLTransportWSServerCleanup = useGraphQLWSServer(
         {
+            ...filterObject(mergedOptions, ['keepAlive']),
             schema,
             // Adding a context property lets you add data to your GraphQL operation context
             context: mergedOptions.wsContext
@@ -124,7 +126,6 @@ const createGraphQLHTTPServer = async (options = {}) => {
         csrfPrevention: true,
         cache: "bounded",
         plugins: apolloServerPlugins,
-
     });
 
     await apolloServer.start();

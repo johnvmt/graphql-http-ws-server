@@ -1,6 +1,6 @@
 {
   "name": "graphql-http-ws-server",
-  "version": "5.0.2",
+  "version": "5.0.3",
   "description": "Apollo-based GraphQL Server with WebSockets",
   "keywords": [
     "graphql",

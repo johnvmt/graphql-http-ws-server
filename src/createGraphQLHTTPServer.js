@@ -26,6 +26,7 @@ const createGraphQLHTTPServer = async (options = {}) => {
         graphQLPath: '/graphql',
         subscriptionsPath: '/graphql',
         listen: !options.httpServer && !options.expressApp, // default: listen only when creating server
+        keepAlive: 10000, // for websocket servers
         ...options
     };
 
@@ -56,6 +57,7 @@ const createGraphQLHTTPServer = async (options = {}) => {
 
     const graphQLTransportWSServerCleanup = useGraphQLWSServer(
         {
+            ...filterObject(mergedOptions, ['keepAlive']),
             schema,
             // Adding a context property lets you add data to your GraphQL operation context
             context: mergedOptions.wsContext

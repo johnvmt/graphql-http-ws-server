@@ -3,20 +3,21 @@
 Note: The server will only intercept WS connections that have the graphQL subscription path
 
 ### Options
-| Option            	| Description                                       	| Default                  	|
-|-------------------	|---------------------------------------------------	|--------------------------	|
-| schema            	| Executable schema                                 	| null                     	|
-| typeDefs          	| GraphQL type definitions (combine with resolvers) 	| null                     	|
-| resolvers         	| GraphQL type definitions (combine with typeDefs)  	| null                     	|
-| port              	| Port for HTTP Server to listen on                 	| 80                       	|
-| graphQLPath       	| Path under HTTP server for GraphQL                	| /graphql                 	|
-| subscriptionsPath 	| Path under WS server for GraphQL                  	| /graphql                 	|
-| listen            	| Start HTTP Server                                 	| true                     	|
-| logger            	| Pass extrernal logger (eg: Winston)               	| null                     	|
-| plugins           	| Apollo plugins                                    	| []                       	|
-| expressApp        	| Pass in an express app                            	| null, module will create 	|
-| httpServer        	| Pass in an HTTP server                            	| null, module will create 	|
-| wsServer          	| pass in a WS server                               	| null, module will create 	|
+| Option            	 | Description                                       	 | Default                  	 |
+|---------------------|-----------------------------------------------------|----------------------------|
+| schema            	 | Executable schema                                 	 | null                     	 |
+| typeDefs          	 | GraphQL type definitions (combine with resolvers) 	 | null                     	 |
+| resolvers         	 | GraphQL type definitions (combine with typeDefs)  	 | null                     	 |
+| port              	 | Port for HTTP Server to listen on                 	 | 80                       	 |
+| graphQLPath       	 | Path under HTTP server for GraphQL                	 | /graphql                 	 |
+| subscriptionsPath 	 | Path under WS server for GraphQL                  	 | /graphql                 	 |
+| listen            	 | Start HTTP Server                                 	 | true                     	 |
+| bodyParserOptions 	 | Options for body-parser's JSON parser             	 | {limit: 1mb}	              |
+| logger            	 | Pass extrernal logger (eg: Winston)               	 | null                     	 |
+| plugins           	 | Apollo plugins                                    	 | []                       	 |
+| expressApp        	 | Pass in an express app                            	 | null, module will create 	 |
+| httpServer        	 | Pass in an HTTP server                            	 | null, module will create 	 |
+| wsServer          	 | pass in a WS server                               	 | null, module will create 	 |
 
 ### Example
 

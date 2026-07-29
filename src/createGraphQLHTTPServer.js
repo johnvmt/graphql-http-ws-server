@@ -8,7 +8,7 @@ import url from 'node:url';
 import { makeExecutableSchema } from '@graphql-tools/schema';
 
 import { ApolloServer } from '@apollo/server';
-import { expressMiddleware } from '@apollo/server/express4';
+import { expressMiddleware } from '@as-integrations/express5';
 import { ApolloServerPluginDrainHttpServer } from '@apollo/server/plugin/drainHttpServer';
 
 // graphql-ws
@@ -53,7 +53,7 @@ const createGraphQLHTTPServer = async (options = {}) => {
         : createHttpServer(expressApp);
 
     // graphql-transport-ws subprotocol (graphql-ws module)
-    const graphQLWSTransportWSServer = new WebSocketServer({ noServer: true });
+    const graphQLWSTransportWSServer = new WebSocketServer({ noServer: true, handleProtocols: () => 'graphql-transport-ws' });
 
     const graphQLTransportWSServerCleanup = useGraphQLWSServer(
         {
@@ -66,7 +66,7 @@ const createGraphQLHTTPServer = async (options = {}) => {
     );
 
     // graphql-ws subprotocol (subscriptions-transport-ws module)
-    const graphQLWSWSServer = new WebSocketServer({ noServer: true });
+    const graphQLWSWSServer = new WebSocketServer({ noServer: true, handleProtocols: () => 'graphql-ws' });
 
     SubscriptionsTransportWSSubscriptionServer.create({
             // allowed options
@@ -80,24 +80,28 @@ const createGraphQLHTTPServer = async (options = {}) => {
     httpServer.on('upgrade', (request, socket, head) => {
         const pathname = url.parse(request.url).pathname;
 
-        if(pathname === mergedOptions.subscriptionsPath) {
-            const wsSubprotocol = request.headers['sec-websocket-protocol']
-                ? request.headers['sec-websocket-protocol']
-                : 'graphql-ws';
+        if(pathname !== mergedOptions.subscriptionsPath)
+            return;
 
-            if(wsSubprotocol === 'graphql-transport-ws') { // newer graphql-transport-ws subprotocol, graphql-ws module
-                graphQLWSTransportWSServer.handleUpgrade(request, socket, head, (socket) => {
-                    graphQLWSTransportWSServer.emit('connection', socket, request);
-                });
-            }
-            else if(wsSubprotocol === 'graphql-ws') { // legacy graphql-ws subprotocol, subscriptions-transport-ws module
-                graphQLWSWSServer.handleUpgrade(request, socket, head, (socket) => {
-                    graphQLWSWSServer.emit('connection', socket, request);
-                });
-            }
-            else
-                throw new Error(`Unknown WS subprotocol`)
+        // A client may offer several subprotocols in one Sec-WebSocket-Protocol header
+        // (e.g. Apollo Sandbox offers "graphql-transport-ws, graphql-ws"), so parse the
+        // header into a list and pick the best supported one rather than matching exactly.
+        const offeredSubprotocols = (request.headers['sec-websocket-protocol'] ?? 'graphql-ws')
+            .split(',')
+            .map((subprotocol) => subprotocol.trim());
+
+        if(offeredSubprotocols.includes('graphql-transport-ws')) { // newer graphql-transport-ws subprotocol, graphql-ws module
+            graphQLWSTransportWSServer.handleUpgrade(request, socket, head, (socket) => {
+                graphQLWSTransportWSServer.emit('connection', socket, request);
+            });
         }
+        else if(offeredSubprotocols.includes('graphql-ws')) { // legacy graphql-ws subprotocol, subscriptions-transport-ws module
+            graphQLWSWSServer.handleUpgrade(request, socket, head, (socket) => {
+                graphQLWSWSServer.emit('connection', socket, request);
+            });
+        }
+        else // no supported subprotocol was offered: close the socket instead of crashing the process
+            socket.destroy();
     });
 
     const apolloServerPlugins = [
@@ -132,13 +136,23 @@ const createGraphQLHTTPServer = async (options = {}) => {
 
     expressApp.use(mergedOptions.graphQLPath,
         cors(),
-        bodyParser.json(),
+        bodyParser.json({
+            limit: '1mb', // overrides default 100kb limit
+            ...mergedOptions.bodyParserOptions
+        }),
         expressMiddleware(apolloServer, {
             context: mergedOptions.httpContext ?? mergedOptions.context
         })
     );
 
     if(mergedOptions.listen) {
+        httpServer.on('error', (error) => {
+            if(mergedOptions.logger)
+                mergedOptions.logger.error(`GraphQLHTTPServer failed to listen on port ${mergedOptions.port}: ${error.message}`);
+            else
+                throw error;
+        });
+
         httpServer.listen(mergedOptions.port, () => {
             if(mergedOptions.logger) {
                 mergedOptions.logger.info(`GraphQLHTTPServer ready on port ${mergedOptions.port} on path ${mergedOptions.graphQLPath}`);

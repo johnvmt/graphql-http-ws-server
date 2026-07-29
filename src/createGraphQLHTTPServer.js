@@ -136,7 +136,10 @@ const createGraphQLHTTPServer = async (options = {}) => {
 
     expressApp.use(mergedOptions.graphQLPath,
         cors(),
-        bodyParser.json(),
+        bodyParser.json({
+            limit: '1mb', // overrides default 100kb limit
+            ...mergedOptions.bodyParserOptions
+        }),
         expressMiddleware(apolloServer, {
             context: mergedOptions.httpContext ?? mergedOptions.context
         })
